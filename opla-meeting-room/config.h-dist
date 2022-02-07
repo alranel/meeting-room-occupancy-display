@@ -1,0 +1,9 @@
+// WiFi credentials
+constexpr char* ssid     = "...";
+constexpr char* password = "...";
+
+// Misc
+constexpr char* url  = "https://script.google.com/macros/s/.../exec";
+constexpr char* room = "...@resource.calendar.google.com";
+constexpr unsigned long update_interval = 1800; // seconds
+constexpr int led_brightness = 10; // 0-255
