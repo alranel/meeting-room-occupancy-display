@@ -120,7 +120,6 @@ bool http_req(WiFiSSLClient &client, String url) {
     client.println("Connection: close");
     client.println();
 
-    request:
     while (client.connected()) {
       String line = client.readStringUntil('\n');
       if (line == "\r") {
@@ -130,7 +129,7 @@ bool http_req(WiFiSSLClient &client, String url) {
         client.stop();
         url = line;
         url.replace("Location: ", "");
-        goto request;
+        break;
       }
     }
   }
