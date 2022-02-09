@@ -3,9 +3,21 @@
 #include <StringSplitter.h>
 #include "config.h"
 #include "parseUrl.h"
+#include <map>
+
+class Event {
+  public:
+  Event() {};
+  Event(unsigned long _end, String _title, String _guests)
+    : end(_end), title(_title), guests(_guests) {};
+  unsigned long end;
+  String title, guests;
+};
 
 MKRIoTCarrier carrier;
 unsigned long lastUpdated = 0;
+unsigned long lastRedrawn = 0;
+std::map<unsigned long,Event> events;
 
 void setup() {
   Serial.begin(115200);
@@ -30,17 +42,21 @@ void setup() {
 }
 
 void loop() {
-  if ((WiFi.getTime() - lastUpdated) >= update_interval)
-    update();
+  unsigned long now = WiFi.getTime();
+  if ((now - lastUpdated) >= update_interval)
+    getEvents();
+  
+  if ((now - lastRedrawn) >= 30*1000)
+    updateDisplay();
   
   carrier.Buttons.update();
   if (carrier.Button1.onTouchDown()) {
     carrier.Buzzer.beep();
-    update();
+    getEvents();
   }
 }
 
-void update() {
+void getEvents() {
   carrier.leds.setPixelColor(1, 0, 0, 0);
   carrier.leds.show();
 
@@ -51,8 +67,7 @@ void update() {
     return;
   }
 
-  unsigned long now = WiFi.getTime();
-  bool has_events = false;
+  events.clear();
   while (client.connected()) {
     String line = client.readStringUntil('\n');
     if (line == "")
@@ -60,6 +75,26 @@ void update() {
     StringSplitter spl(line, '|', 4);
     unsigned long start = spl.getItemAtIndex(0).toInt();
     unsigned long end = spl.getItemAtIndex(1).toInt();
+
+    events[start] = Event(end, spl.getItemAtIndex(2), spl.getItemAtIndex(3));
+  }
+
+  client.stop();
+  lastUpdated = WiFi.getTime();
+  carrier.leds.setPixelColor(1, led_brightness, led_brightness, led_brightness);
+  carrier.leds.show();
+  updateDisplay();
+}
+
+void updateDisplay() {
+  unsigned long now = WiFi.getTime();
+  bool has_events = false;
+
+  for (auto it = events.begin(); it != events.end(); ++it) {
+    auto& start = it->first;
+    auto& end = it->second.end;
+    auto& title = it->second.title;
+    auto& guests = it->second.guests;
 
     // Is this event in the past? If so, ignore it.
     if (end <= now)
@@ -76,10 +111,10 @@ void update() {
     carrier.display.setTextColor(ST77XX_BLACK);
     carrier.display.setTextSize(3);
     carrier.display.setCursor(20, 120);
-    carrier.display.print(spl.getItemAtIndex(2));
+    carrier.display.print(title);
     carrier.display.setTextSize(2);
     carrier.display.setCursor(20, 150);
-    carrier.display.print(spl.getItemAtIndex(3));
+    carrier.display.print(guests);
     has_events = true;
     break;
   }
@@ -92,10 +127,7 @@ void update() {
     carrier.display.print("No events today");
   }
 
-  client.stop();
-  lastUpdated = now;
-  carrier.leds.setPixelColor(1, led_brightness, led_brightness, led_brightness);
-  carrier.leds.show();
+  lastRedrawn = now;
 }
 
 bool http_req(WiFiSSLClient &client, String url) {
