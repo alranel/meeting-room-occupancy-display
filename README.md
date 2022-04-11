@@ -20,8 +20,6 @@ Bonus points: if you want to be able to update the firmware via WiFi, thus witho
 
 ## How does it look like
 
-(Yeah, these pictures are very ugly. Sorry.)
-
 When the room is busy the screen will be red, and information about the current meeting will be displayed (time slot and guests):
 
 ![](img/busy.jpg)
