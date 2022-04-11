@@ -110,10 +110,10 @@ void updateDisplay() {
     // Show event details
     carrier.display.setTextColor(ST77XX_BLACK);
     carrier.display.setTextSize(3);
-    carrier.display.setCursor(20, 120);
+    carrier.display.setCursor(10, 90);
     carrier.display.print(title);
     carrier.display.setTextSize(2);
-    carrier.display.setCursor(20, 150);
+    carrier.display.setCursor(10, 120);
     carrier.display.print(guests);
     has_events = true;
     break;
